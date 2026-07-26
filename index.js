@@ -111,7 +111,7 @@ client.on(Events.MessageCreate, async message => {
 
         if (!command) return;
 
-        await command.execute(message, args);
+        await command.execute(client, message, args);
     }
 })
 
