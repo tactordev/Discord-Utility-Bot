@@ -1,15 +1,14 @@
 require("dotenv").config();
 
 
-const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require("discord.js");
+const { Client, Collection, Events, GatewayIntentBits, MessageFlags, PermissionsBitField } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const { emojis } = require("./utils/assets");
 
 
 // discord bot token
 const TOKEN = process.env.TOKEN;
-
-
 
 // client setup
 const client = new Client(
@@ -111,9 +110,27 @@ client.on(Events.MessageCreate, async message => {
 
         if (!command) return;
 
-        await command.execute(client, message, args);
+        if (command.permissions) {
+            const agent = message.member;
+            let allowed = false;
+            let required = ``;
+            command.permissions.map((permission, index) => {
+                if (agent.permissions.has(permission)) allowed = true;
+                required += `\`${new PermissionsBitField(permission)}\`${index === command.permissions.length - 1 ? "" : ", "}`;
+                
+            });
+            
+            if (!allowed) return await message.reply({
+                content: `${emojis.error} Missing permissions.\n-# ${required}`
+            });
+        }
+
+        const initialResponse = await message.reply({
+            content: `-# ${emojis.loading}`
+        });
+        await command.execute(client, message, initialResponse, args);
     }
-})
+});
 
 
 
