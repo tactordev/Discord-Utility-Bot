@@ -4,8 +4,8 @@ require("dotenv").config();
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags, PermissionsBitField } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const { emojis } = require("./utils/assets");
-const Color = require("./utils/text-color");
+const { emojis } = require("#/utils/assets");
+const Color = require("#/utils/text-color");
 
 
 // discord bot token

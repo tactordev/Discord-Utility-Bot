@@ -1,7 +1,7 @@
 const discord = require('discord.js');
-const { emojis } = require('../../utils/assets');
-const { fetchUser } = require("../../utils/member");
-const { extractTime } = require("../../utils/parsing");
+const { emojis } = require('#/utils/assets');
+const { fetchUser } = require("#/utils/member");
+const { extractTime } = require("#/utils/parsing");
 
 module.exports = {
     name: 'ban',
