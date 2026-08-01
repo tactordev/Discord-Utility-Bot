@@ -5,6 +5,7 @@ const { Client, Collection, Events, GatewayIntentBits, MessageFlags, Permissions
 const fs = require("fs");
 const path = require("path");
 const { emojis } = require("./utils/assets");
+const Color = require("./utils/text-color");
 
 
 // discord bot token
@@ -31,7 +32,6 @@ client.subcommandHandlers = new Collection();
 
 
 // fetching cmds
-
 const fetchCmd = (location) => {
     fs.readdirSync(`${location}`).map((item) => {
         if (!item.endsWith(".js") && !fs.statSync(path.join(location, item)).isDirectory()) {
@@ -40,25 +40,29 @@ const fetchCmd = (location) => {
 
         if (item.endsWith(".js")) { // possible command file
             const command = require(path.join(location, item));
+
+            const full = `${location}${path.sep}${item}`;
+            const commandsDir = path.join(__dirname, 'commands');
+            const relative = path.relative(commandsDir, full);
+            const withoutExtension = relative.slice(0, -path.extname(relative).length);
+            const dotNotation = withoutExtension.split(path.sep).join('.');
             
             if (!command.type || (!(command.name) && !(command.data)) || !command.execute) {
-                return console.warn(`Skipping ${location}/${item} as it is missing an attribute of 'type', 'name' or 'data', 'execute'`);   
+                return console.warn(`${Color.orange}[Skipping]${Color.reset} ${Color.blue}${relative}${Color.reset} as it is missing an attribute of 'type', 'name' or 'data', 'execute'`);   
             }
 
             switch (command.type) {
                 case 'prefix':
+                    console.log(`${Color.yellow}[Loading]${Color.reset} ${Color.blue}${relative}${Color.reset} as prefix command.`);
                     return client.prefixCmds.set(command.name, command);
                 case 'slash':
+                    console.log(`${Color.yellow}[Loading]${Color.reset} ${Color.blue}${relative}${Color.reset} as slash command.`);
                     return client.slashCmds.set(command.name, command);
                 case 'sub':
-                    const full = `${location}${path.sep}${item}`;
-                    const commandsDir = path.join(__dirname, 'commands');
-                    const relative = path.relative(commandsDir, full);
-                    const withoutExtension = relative.slice(0, -path.extname(relative).length);
-                    const dotNotation = withoutExtension.split(path.sep).join('.');
+                    console.log(`${Color.yellow}[Loading]${Color.reset} ${Color.blue}${relative}${Color.reset} as subcommand.`);
                     return client.subcommandHandlers.set(dotNotation, command);
                 default:
-                    return console.warn(`Skipping ${location}/${item} as it is has an unknown command type.`);
+                    return console.warn(`${Color.orange}[Skipping]${Color.reset} ${Color.blue}${location}/${item}${Color.reset} as it is has an unknown command type.`);
             }
         } else { // possible sub command files / grouped commands
             return fetchCmd(`${location}${path.sep}${item}`);
