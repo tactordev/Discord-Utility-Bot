@@ -12,7 +12,7 @@ module.exports = {
         
         await message.delete().catch(() => {});
 
-        const format = `ban [user*] [time ? indefinite] [reason ? None.]`;
+        const format = `ban [user*] [time ? indefinite] [reason ? No reason provided.]`;
 
         if (args.length < 1) {
             return await initialResponse.edit({
@@ -41,9 +41,8 @@ module.exports = {
             ({ rawDuration, duration, reason } = data);
         }
 
-        await initialResponse.edit({
+        return await initialResponse.edit({
             content: `${emojis.success} Successfully banned **${user.user.username}** **${rawDuration ? `for ${rawDuration}` : "indefinitely"}** for **${reason?.length > 0 ? reason : "no reason provided"}**.`
         });
-        return;
     }
 }
