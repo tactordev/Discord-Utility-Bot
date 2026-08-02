@@ -69,7 +69,17 @@ function loadCommands(dir) {
                 slashCommands.push(parentCommand);
             }
 
-            subcommandParents.get(parentName).addSubcommand(command.data);
+            const currentParent = subcommandParents.get(parentName);
+            const updatedParent = currentParent.addSubcommand(command.data);
+
+            if (updatedParent !== currentParent) {
+                subcommandParents.set(parentName, updatedParent);
+
+                const parentIndex = slashCommands.indexOf(currentParent);
+                if (parentIndex !== -1) {
+                    slashCommands[parentIndex] = updatedParent;
+                }
+            }
             continue;
         }
 
