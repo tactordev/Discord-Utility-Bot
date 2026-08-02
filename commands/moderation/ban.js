@@ -42,7 +42,7 @@ module.exports = {
         }
 
         return await initialResponse.edit({
-            content: `${emojis.success} Successfully banned **${user.user.username}** **${rawDuration ? `for ${rawDuration}` : "indefinitely"}** for **${reason?.length > 0 ? reason : "no reason provided"}**.`
+            content: `${emojis.success} Successfully banned **${user.user.username}** **${rawDuration ? `for ${rawDuration}` : "indefinitely"}** for **${reason?.length > 0 ? reason : "no reason provided."}**`
         });
     }
 }

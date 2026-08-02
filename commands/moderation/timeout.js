@@ -45,7 +45,7 @@ module.exports = {
         });
 
         return await initialResponse.edit({
-            content: `${emojis.success} Successfully timed out **${user.user.username}** for **${rawDuration}** for **${reason?.length > 0 ? reason : "no reason provided"}**.`
+            content: `${emojis.success} Successfully timed out **${user.user.username}** for **${rawDuration}** for **${reason?.length > 0 ? reason : "no reason provided."}**`
         });
     }
 }
