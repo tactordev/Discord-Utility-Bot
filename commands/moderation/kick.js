@@ -1,6 +1,6 @@
 const discord = require('discord.js');
-const { emojis } = require('#/utils/assets');
-const { fetchUser } = require('#/utils/member');
+const { emojis } = require('#utils/assets');
+const { fetchUser } = require('#utils/member');
 
 module.exports = {
     name: 'kick',

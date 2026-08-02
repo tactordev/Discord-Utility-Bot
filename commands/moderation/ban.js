@@ -1,7 +1,7 @@
 const discord = require('discord.js');
-const { emojis } = require('#/utils/assets');
-const { fetchUser } = require("#/utils/member");
-const { extractTime } = require("#/utils/parsing");
+const { emojis } = require('#utils/assets');
+const { fetchUser } = require("#utils/member");
+const { extractTime } = require("#utils/parsing");
 
 module.exports = {
     name: 'ban',
@@ -12,7 +12,7 @@ module.exports = {
         
         await message.delete().catch(() => {});
 
-        const format = `ban [user*] [time ? indefinite] [reason ? No reason provided.]`;
+        const format = `ban [user*] [duration ? indefinite] [reason ? No reason provided.]`;
 
         if (args.length < 1) {
             return await initialResponse.edit({
