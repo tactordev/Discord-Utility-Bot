@@ -54,7 +54,7 @@ async function getAgentModerations(guildId, agentId) {
         crlfDelay: Infinity
     });
 
-    for await (const line of file) {
+    for await (const line of rl) {
         const moderation = JSON.parse(line);
         if (moderation.guild === guildId && moderation.agent === agentId) {
             moderations.push(moderation);
