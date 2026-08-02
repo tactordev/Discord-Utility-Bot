@@ -1,0 +1,34 @@
+const discord = require('discord.js');
+const { emojis } = require('#utils/assets');
+const { fetchUser } = require('#utils/member');
+
+module.exports = {
+    name: 'warn',
+    description: 'Warn a user',
+    type: 'prefix',
+    permissions: [discord.PermissionsBitField.Flags.ModerateMembers, discord.PermissionsBitField.Flags.Administrator],
+    async execute(client, message, initialResponse, args) {
+        await message.delete().catch(() => {});
+
+        const format = `warn [user*] [reason*]`;
+
+        if (args.length < 2) {
+            return await initialResponse.edit({
+                content: `${emojis.error} Missing required arguments.\n-# ${format}`
+            });
+        }
+
+        const member = args[0];
+        const reason = args.slice(1).join(" ");
+
+        const user = await fetchUser(member, message.guild);
+
+        if (!user) return await initialResponse.edit({
+            content: `${emojis.error} Invalid user provided: **${member}**.\n-# ${format}`
+        });
+
+        return await initialResponse.edit({
+            content: `${emojis.success} Successfully warned **${user.user.username}** for **${reason}**`
+        });
+    }
+}
