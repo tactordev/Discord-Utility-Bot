@@ -2,6 +2,7 @@ const discord = require('discord.js');
 const { emojis } = require('#utils/assets');
 const { fetchUser } = require("#utils/member");
 const { extractTime } = require("#utils/parsing");
+const { saveModeration } = require('#utils/moderation');
 
 module.exports = {
     name: 'ban',
@@ -40,6 +41,8 @@ module.exports = {
         if (data) {
             ({ rawDuration, duration, reason } = data);
         }
+
+        saveModeration(message.guild.id, user.user.id, "ban", message.author, user.user, duration, reason);
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully banned **${user.user.username}** **${rawDuration ? `for ${rawDuration}` : "indefinitely"}** for **${reason?.length > 0 ? reason : "no reason provided."}**`

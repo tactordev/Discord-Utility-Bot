@@ -2,6 +2,7 @@ const discord = require('discord.js');
 const { emojis } = require('#utils/assets');
 const { fetchUser } = require('#utils/member');
 const { extractTime } = require('#utils/parsing');
+const { saveModeration } = require('#utils/moderation');
 
 module.exports = {
     name: 'timeout',
@@ -43,6 +44,8 @@ module.exports = {
         if (!rawDuration) return await initialResponse.edit({
             content: `${emojis.error} Invalid duration provided.\n-# ${format}`
         });
+
+        saveModeration(message.guild.id, user.user.id, "timeout", message.author, user.user, duration, reason);
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully timed out **${user.user.username}** for **${rawDuration}** for **${reason?.length > 0 ? reason : "no reason provided."}**`

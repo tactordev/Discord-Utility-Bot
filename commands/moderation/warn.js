@@ -1,6 +1,7 @@
 const discord = require('discord.js');
 const { emojis } = require('#utils/assets');
 const { fetchUser } = require('#utils/member');
+const { saveModeration } = require('#utils/moderation');
 
 module.exports = {
     name: 'warn',
@@ -26,6 +27,8 @@ module.exports = {
         if (!user) return await initialResponse.edit({
             content: `${emojis.error} Invalid user provided: **${member}**.\n-# ${format}`
         });
+
+        saveModeration(message.guild.id, user.user.id, "warning", message.author, user.user, Infinity, reason);
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully warned **${user.user.username}** for **${reason}**`
