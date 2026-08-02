@@ -55,6 +55,9 @@ const fetchCmd = (location) => {
             // register component handlers
             if (command.interactions) {
                 for (const [id, callback] of Object.entries(command.interactions)) {
+                    console.log(id);
+                    if (id.startsWith("ignore:")) continue;
+                    
                     client.componentHandlers.set(id, callback);
                 }
             }
@@ -85,6 +88,8 @@ fetchCmd(commandsPath);
 // command handling
 
 client.on(Events.InteractionCreate, async interaction => {
+    if (interaction.customId && interaction.customId.startsWith("ignore:")) return;
+
     if (interaction.isChatInputCommand()) {
 
         const command = client.slashCmds.get(interaction.commandName);
@@ -106,21 +111,24 @@ client.on(Events.InteractionCreate, async interaction => {
 
             const handler = client.subcommandHandlers.get(key);
             if (handler) {
-                const initialResponse = await interaction.reply({
+                const initialResponse = !handler.noAutoResponse ? await interaction.reply({
                     content: `-# ${emojis.loading}`,
                     flags: MessageFlags.Ephemeral
-                });
+                }) : null;
                 await handler.execute(interaction, initialResponse);
             } else {
                 return await interaction.reply({ content: `Command handler not found.`, flags: MessageFlags.Ephemeral });
             }
         }
-    } else if (interaction.isButton()) {
-        const handler = client.componentHandlers.get(interaction.customId);
-        
+    } else if (interaction.isButton() || interaction.isModalSubmit()) {
+        const raw = interaction.customId;
+        const id = raw.split("-")[0];
+        const options = raw.split("-").slice(1);
+
+        const handler = client.componentHandlers.get(id, options);
 
         if (handler) {
-            await handler(interaction);
+            await handler(interaction, options);
         } else {
             return await interaction.reply({
                 content: `${emojis.error} Component handler not found.`,
