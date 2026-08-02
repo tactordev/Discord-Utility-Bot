@@ -28,6 +28,7 @@ const client = new Client(
 client.prefixCmds = new Collection();
 client.slashCmds = new Collection();
 client.subcommandHandlers = new Collection();
+client.componentHandlers = new Collection();
 
 
 
@@ -50,7 +51,15 @@ const fetchCmd = (location) => {
             if (!command.type || (!(command.name) && !(command.data)) || !command.execute) {
                 return console.warn(`${Color.orange}[Skipping]${Color.reset} ${Color.blue}${relative}${Color.reset} as it is missing an attribute of 'type', 'name' or 'data', 'execute'`);   
             }
+            
+            // register component handlers
+            if (command.interactions) {
+                for (const [id, callback] of Object.entries(command.interactions)) {
+                    client.componentHandlers.set(id, callback);
+                }
+            }
 
+            // register commands
             switch (command.type) {
                 case 'prefix':
                     console.log(`${Color.yellow}[Loading]${Color.reset} ${Color.blue}${relative}${Color.reset} as prefix command.`);
@@ -76,30 +85,47 @@ fetchCmd(commandsPath);
 // command handling
 
 client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand()) return;
+    if (interaction.isChatInputCommand()) {
 
-    const command = client.slashCmds.get(interaction.commandName);
+        const command = client.slashCmds.get(interaction.commandName);
 
-    if (command) {
-        await command.execute();
-    } else {
-        const group = interaction.options.getSubcommandGroup(false);
-        const subcommand = interaction.options.getSubcommand(false);
-
-        let key;
-        if (group) {
-            key = `${interaction.commandName}.${group}`;
-        } else if (subcommand) {
-            key = `${interaction.commandName}.${subcommand}`;
-        }
-
-        if (!key) return await interaction.reply({ content: `Command not found.`, flags: MessageFlags.Ephemeral });
-
-        const handler = client.subcommandHandlers.get(key);
-        if (handler) {
-            await handler.execute(interaction);
+        if (command) {
+            await command.execute();
         } else {
-            return await interaction.reply({ content: `Command handler not found.`, flags: MessageFlags.Ephemeral });
+            const group = interaction.options.getSubcommandGroup(false);
+            const subcommand = interaction.options.getSubcommand(false);
+
+            let key;
+            if (group) {
+                key = `${interaction.commandName}.${group}`;
+            } else if (subcommand) {
+                key = `${interaction.commandName}.${subcommand}`;
+            }
+
+            if (!key) return await interaction.reply({ content: `Command not found.`, flags: MessageFlags.Ephemeral });
+
+            const handler = client.subcommandHandlers.get(key);
+            if (handler) {
+                const initialResponse = await interaction.reply({
+                    content: `-# ${emojis.loading}`,
+                    flags: MessageFlags.Ephemeral
+                });
+                await handler.execute(interaction, initialResponse);
+            } else {
+                return await interaction.reply({ content: `Command handler not found.`, flags: MessageFlags.Ephemeral });
+            }
+        }
+    } else if (interaction.isButton()) {
+        const handler = client.componentHandlers.get(interaction.customId);
+        
+
+        if (handler) {
+            await handler(interaction);
+        } else {
+            return await interaction.reply({
+                content: `${emojis.error} Component handler not found.`,
+                flags: MessageFlags.Ephemeral
+            });
         }
     }
 });
