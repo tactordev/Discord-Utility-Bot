@@ -4,8 +4,8 @@ require("dotenv").config();
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags, PermissionsBitField } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const { emojis } = require("#/utils/assets");
-const Color = require("#/utils/text-color");
+const { emojis } = require("./utils/assets");
+const Color = require("./utils/text-color");
 
 
 // discord bot token
@@ -143,6 +143,7 @@ client.on(Events.MessageCreate, async message => {
 client.once(Events.ClientReady, (client) => {
     client.user.setStatus('dnd');
     client.user.setActivity({ type: 3, name: 'Tactor Development'});
+    return console.log(`\n\n${Color.green}[Ready]${Color.reset} Logged in as ${Color.blue}${client.user.tag}${Color.reset}`);
 });
 
 
