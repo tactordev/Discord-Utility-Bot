@@ -32,7 +32,6 @@ module.exports = {
         }
 
         const data = extractTime(raw.join(' '));
-        console.log(data);
 
         let rawDuration;
         let duration;
@@ -42,7 +41,7 @@ module.exports = {
             ({ rawDuration, duration, reason } = data);
         }
 
-        saveModeration(message.guild.id, user.user.id, "ban", message.author, user.user, duration, reason);
+        saveModeration(message.guild.id, user.user.id, "ban", message.author, user.user, rawDuration, reason);
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully banned **${user.user.username}** **${rawDuration ? `for ${rawDuration}` : "indefinitely"}** for **${reason?.length > 0 ? reason : "no reason provided."}**`

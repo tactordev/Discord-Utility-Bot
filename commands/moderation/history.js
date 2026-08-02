@@ -146,10 +146,6 @@ module.exports = {
         "button:history:refresh": async (interaction) => {
             const cached = cache.get(interaction.message.id);
             if (!cached) {
-                await interaction.message.edit({
-                    content: `> ${emojis.error} **Interaction expired.**`,
-                    components: []
-                });
 
                 return await interaction.reply({
                     content: `> ${emojis.error} This interaction has expired.`,
@@ -176,10 +172,6 @@ module.exports = {
         "button:history:next": async (interaction) => {
             const cached = cache.get(interaction.message.id);
             if (!cached) {
-                await interaction.message.edit({
-                    content: `> ${emojis.error} **Interaction expired.**`,
-                    components: []
-                });
 
                 return await interaction.reply({
                     content: `> ${emojis.error} This interaction has expired.`,

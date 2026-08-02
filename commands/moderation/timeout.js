@@ -45,7 +45,7 @@ module.exports = {
             content: `${emojis.error} Invalid duration provided.\n-# ${format}`
         });
 
-        saveModeration(message.guild.id, user.user.id, "timeout", message.author, user.user, duration, reason);
+        saveModeration(message.guild.id, user.user.id, "timeout", message.author, user.user, rawDuration, reason);
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully timed out **${user.user.username}** for **${rawDuration}** for **${reason?.length > 0 ? reason : "no reason provided."}**`

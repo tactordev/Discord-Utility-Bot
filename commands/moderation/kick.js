@@ -28,7 +28,7 @@ module.exports = {
             content: `${emojis.error} Invalid user provided: **${member}**.\n-# ${format}`
         });
 
-        saveModeration(message.guild.id, user.user.id, "kick", message.author, user.user, Infinity, reason);
+        saveModeration(message.guild.id, user.user.id, "kick", message.author, user.user, Infinity, reason.join(" "));
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully kicked **${user.user.username}** for **${reason}**`
