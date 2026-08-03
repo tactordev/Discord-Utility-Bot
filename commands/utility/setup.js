@@ -571,6 +571,134 @@ module.exports = {
                 content: `> ${emojis.success} Successfully saved embed.`,
                 flags: discord.MessageFlags.Ephemeral
             });
+        },
+        "setup:channels:info": async (interaction, options, client) => {
+            await interaction.reply({
+                content: `> ${emojis.loading}`,
+                flags: discord.MessageFlags.Ephemeral
+            });
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw)
+            } catch (err) {
+                return await interaction.editReply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            const container = new discord.ContainerBuilder()
+                .addTextDisplayComponents((textDisplay) =>
+                    textDisplay
+                        .setContent(
+                            `## [Configuration] General` + 
+                            `\n> **General logs channel:** ${config.channels?.logs ? `<#${config.channels.logs}>` : "None set."}` +
+                            `\n> **Transcripts log channel:** ${config.channels?.transcripts ? `<#${config.channels.transcripts}>` : "None set."}` +
+                            `\n> **Fixed bot managers:** Administrator, ManageGuild.` + 
+                            `\n> **Custom bot managers:** ${config.rolePermissions.botManagement.map((role) => `<@&${role}>`).join(", ")}.`
+                        )
+                )
+
+            return await interaction.editReply({
+                components: [container],
+                content: null,
+                flags: discord.MessageFlags.IsComponentsV2
+            });
+        },
+        "setup:channels:edit": async (interaction, options, client) => {
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw)
+            } catch (err) {
+                return await interaction.reply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`,
+                    flags: discord.MessageFlags.Ephemeral
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            const modal = new discord.ModalBuilder()
+                .setTitle("[Configuration] General")
+                .setCustomId("setup:channels:saveedit");
+
+            const logSelect = new discord.ChannelSelectMenuBuilder()
+                .setCustomId("ignore:channels:log")
+                .setPlaceholder("Place to send general logs")
+                .setDefaultChannels(config.channels.logs ?? [])
+                .setRequired(true);
+
+            const transcriptSelect = new discord.ChannelSelectMenuBuilder()
+                .setCustomId("ignore:channels:transcript")
+                .setPlaceholder("Place to send ticket transcripts")
+                .setDefaultChannels(config.channels.transcripts ?? [])
+                .setRequired(true);
+
+            const roleSelect = new discord.RoleSelectMenuBuilder()
+                .setCustomId("ignore:roles:botManagement")
+                .setPlaceholder("Roles that can manage this bot")
+                .setDefaultRoles(config.rolePermissions.botManagement ?? [])
+                .setMaxValues(4)
+                .setRequired(false);
+
+            const logLabel = new discord.LabelBuilder()
+                .setLabel("Place to send general logs")
+                .setChannelSelectMenuComponent(logSelect);
+
+            const transcriptLabel = new discord.LabelBuilder()
+                .setLabel("Place to send ticket transcripts")
+                .setChannelSelectMenuComponent(transcriptSelect);
+
+            const roleLabel = new discord.LabelBuilder()
+                .setLabel("Roles that can manage this bot")
+                .setRoleSelectMenuComponent(roleSelect);
+            
+            modal.addComponents(
+                logLabel, transcriptLabel, roleLabel
+            );
+            return await interaction.showModal(modal);
+        },
+        "setup:channels:saveedit": async (interaction, options, client) => {
+            await interaction.reply({
+                content: `> ${emojis.loading} Saving configuration...`,
+                flags: discord.MessageFlags.Ephemeral
+            });
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.editReply({
+                    content: `> ${emojis.error} There was an error reading the config file. Please revert it to the default config.`
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            const logField = interaction.fields.getField("ignore:channels:log");
+            const transcriptField = interaction.fields.getField("ignore:channels:transcript");
+            const botMgmtField = interaction.fields.getField("ignore:roles:botManagement");
+
+            const logChannelId = logField?.channels?.first()?.id ?? null;
+            const transcriptChannelId = transcriptField?.channels?.first()?.id ?? null;
+            const botMgmtRoleIds = botMgmtField?.roles?.map((role) => role.id) ?? [];
+
+            if (!config.channels) config.channels = {};
+            if (!config.rolePermissions) config.rolePermissions = {};
+
+            config.channels.logs = logChannelId;
+            config.channels.transcripts = transcriptChannelId;
+            config.rolePermissions.botManagement = botMgmtRoleIds;
+            
+
+            await fs.promises.writeFile("./data/config.json.tmp", JSON.stringify(config, null, 2));
+            await fs.promises.rename("./data/config.json.tmp", "./data/config.json");
+
+            return await interaction.editReply({
+                content: `> ${emojis.success} Successfully updated configuration.`
+            });
         }
     }
 }
