@@ -1,0 +1,35 @@
+{
+    "channels": {
+        "logs": null,
+        "promotions": null,
+        "infractions": null
+    },
+    "categories": {
+
+    },
+    "role-permissions": {
+        "ban": null,
+        "kick": null,
+        "timeout": null,
+        "warn": null,
+
+        "session-management": null,
+        "staff-management": null,
+        "tickets": {
+            "general": {
+                "respondent": null,
+                "management": null
+            }
+        },
+
+        "bot-management": null
+    },
+    "session-embeds": {
+        "startup": null,
+        "shutdown": null,
+        "vote": null,
+        "boost": null,
+        "assistance": null
+    },
+    "ticket-hierarchy": ["general"]
+}
