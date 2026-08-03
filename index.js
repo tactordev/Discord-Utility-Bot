@@ -94,7 +94,27 @@ client.on(Events.InteractionCreate, async interaction => {
 
         const command = client.slashCmds.get(interaction.commandName);
 
+        
+
         if (command) {
+            
+            if (command.permissions) {
+                const agent = interaction.member;
+
+                let allowed = false;
+                let required = ``;
+                command.permissions.map((permission, index) => {
+                    if (agent.permissions.has(permission)) allowed = true;
+                    required += `\`${new PermissionsBitField(permission)}\`${index === command.permissions.length - 1 ? "" : ", "}`;
+                    
+                });
+                
+                if (!allowed) return await interaction.reply({
+                    content: `${emojis.error} Missing permissions.\n-# ${required}`,
+                    flags: MessageFlags.Ephemeral
+                });
+            }
+
             await command.execute();
         } else {
             const group = interaction.options.getSubcommandGroup(false);
@@ -111,6 +131,22 @@ client.on(Events.InteractionCreate, async interaction => {
 
             const handler = client.subcommandHandlers.get(key);
             if (handler) {
+                if (handler.permissions) {
+                    const agent = interaction.member;
+
+                    let allowed = false;
+                    let required = ``;
+                    handler.permissions.map((permission, index) => {
+                        if (agent.permissions.has(permission)) allowed = true;
+                        required += `\`${new PermissionsBitField(permission)}\`${index === handler.permissions.length - 1 ? "" : ", "}`;
+                        
+                    });
+                    
+                    if (!allowed) return await interaction.reply({
+                        content: `${emojis.error} Missing permissions.\n-# ${required}`,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
                 const initialResponse = !handler.noAutoResponse ? await interaction.reply({
                     content: `-# ${emojis.loading}`,
                     flags: MessageFlags.Ephemeral
@@ -120,7 +156,7 @@ client.on(Events.InteractionCreate, async interaction => {
                 return await interaction.reply({ content: `Command handler not found.`, flags: MessageFlags.Ephemeral });
             }
         }
-    } else if (interaction.isButton() || interaction.isModalSubmit()) {
+    } else if (interaction.isButton() || interaction.isModalSubmit() || interaction.isAnySelectMenu()) {
         const raw = interaction.customId;
         const id = raw.split("-")[0];
         const options = raw.split("-").slice(1);
@@ -128,7 +164,7 @@ client.on(Events.InteractionCreate, async interaction => {
         const handler = client.componentHandlers.get(id, options);
 
         if (handler) {
-            await handler(interaction, options);
+            await handler(interaction, options, client);
         } else {
             return await interaction.reply({
                 content: `${emojis.error} Component handler not found.`,
