@@ -1,35 +1,32 @@
 {
-    "channels": {
-        "logs": null,
-        "promotions": null,
-        "infractions": null
+  "channels": {
+    "logs": null,
+    "transcripts": null
+  },
+  "categories": {
+    "general": null
+  },
+  "rolePermissions": {
+    "ban": [],
+    "kick": [],
+    "timeout": [],
+    "warn": [],
+    "sessionManagement": [],
+    "staffManagement": [],
+    "tickets": {
+      "general": {
+        "respondent": [],
+        "management": []
+      }
     },
-    "categories": {
-        "general": null
-    },
-    "rolePermissions": {
-        "ban": [],
-        "kick": [],
-        "timeout": [],
-        "warn": [],
-
-        "sessionManagement": [],
-        "staffManagement": [],
-        "tickets": {
-            "general": {
-                "respondent": [],
-                "management": []
-            }
-        },
-
-        "botManagement": []
-    },
-    "sessionEmbeds": {
-        "startup": null,
-        "shutdown": null,
-        "vote": null,
-        "boost": null,
-        "assistance": null
-    },
-    "ticketHierarchy": ["general"]
+    "botManagement": []
+  },
+  "sessionEmbeds": {
+    "startup": null,
+    "shutdown": null,
+    "vote": null,
+    "boost": null,
+    "assistance": null
+  },
+  "ticketHierarchy": []
 }
