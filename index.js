@@ -167,7 +167,7 @@ client.on(Events.InteractionCreate, async interaction => {
             await handler(interaction, options, client);
         } else {
             return await interaction.reply({
-                content: `${emojis.error} Component handler not found.`,
+                content: `${emojis.error} Component handler not found.\n-# Try resending the command.`,
                 flags: MessageFlags.Ephemeral
             });
         }
