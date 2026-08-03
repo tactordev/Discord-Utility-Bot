@@ -5,31 +5,31 @@
         "infractions": null
     },
     "categories": {
-
+        "general": null
     },
-    "role-permissions": {
-        "ban": null,
-        "kick": null,
-        "timeout": null,
-        "warn": null,
+    "rolePermissions": {
+        "ban": [],
+        "kick": [],
+        "timeout": [],
+        "warn": [],
 
-        "session-management": null,
-        "staff-management": null,
+        "sessionManagement": [],
+        "staffManagement": [],
         "tickets": {
             "general": {
-                "respondent": null,
-                "management": null
+                "respondent": [],
+                "management": []
             }
         },
 
-        "bot-management": null
+        "botManagement": []
     },
-    "session-embeds": {
+    "sessionEmbeds": {
         "startup": null,
         "shutdown": null,
         "vote": null,
         "boost": null,
         "assistance": null
     },
-    "ticket-hierarchy": ["general"]
+    "ticketHierarchy": ["general"]
 }
