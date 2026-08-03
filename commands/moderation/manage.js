@@ -16,7 +16,7 @@ module.exports = {
             { name: "Delete", value: "delete"}
         ).setRequired(true)),
     noAutoResponse: true,
-    
+    permissions: [discord.PermissionsBitField.Flags.Administrator, discord.PermissionsBitField.Flags.ModerateMembers],
     async execute(interaction) {
         const id = interaction.options.getString("id");
 
