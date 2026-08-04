@@ -1,15 +1,13 @@
-require("dotenv").config();
-
-
-const { Client, Collection, Events, GatewayIntentBits, MessageFlags, PermissionsBitField } = require("discord.js");
+const { REST, Routes, SlashCommandBuilder, Client, Collection, Events, GatewayIntentBits, MessageFlags, PermissionsBitField } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const { emojis } = require("./utils/assets");
 const Color = require("./utils/text-color");
 
+const config = JSON.parse(fs.readFileSync("./data/config.json"));
 
 // discord bot token
-const TOKEN = process.env.TOKEN;
+const TOKEN = config.TOKEN;
+const clientId = config.clientId;
 
 // client setup
 const client = new Client(
@@ -23,6 +21,7 @@ const client = new Client(
     }
 );
 
+let emojiAssets;
 
 // collections to add cmds to
 client.prefixCmds = new Collection();
