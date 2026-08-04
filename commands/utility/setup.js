@@ -867,7 +867,7 @@ module.exports = {
 
             const obj = {
                 category: category.values[0],
-                agents: [roles.values]
+                agents: [...roles.values]
             };
 
             const raw = fs.readFileSync("./data/config.json");
