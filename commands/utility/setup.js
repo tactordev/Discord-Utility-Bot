@@ -861,6 +861,7 @@ module.exports = {
                 .setLabel("Support Agent Roles")
                 .setRoleSelectMenuComponent(agentRoleSelect);
 
+
             modal.addComponents(nameLabel, descrLabel, categoryLabel, roleLabel);
             return await interaction.showModal(modal);
         },
@@ -1004,7 +1005,7 @@ module.exports = {
             await fs.promises.rename("./data/config.json.tmp", "./data/config.json");
 
             return await interaction.editReply({
-                content: `> ${emojis.success} Updated ticket configuration successfully.`
+                content: `> ${emojis.success} Updated ticket configuration successfully.\n_ _\n> Please click the configure button again for this to propagate to the embed.`
             });
         },
         "setup:tickets:deltype": async (interaction, options, client) => {
