@@ -7,7 +7,7 @@ A discord bot that allows you to have seamless management for your roleplay serv
 ***
 ### Local Installation
 To install the bot and run it locally (to either host it locally or to test it out), follows the steps below.
-1. Download the code by clicking on: `Code > Download ZIP` to the top right of the code. **OR** Use `git clone https://github.com/tactordev/nightwatch` in your terminal.
+1. Download the code by clicking on: `Code > Download ZIP` to the top right of the code. **OR** Use `git clone https://github.com/tactordev/nightwatch` in your terminal. **OR** Download the source code from the `Releases` tab.
 2. Then enter the folder (`cd nightwatch`).
 3. Ensure you have NodeJS installed (https://nodejs.org/).
 4. Run `npm install`.
