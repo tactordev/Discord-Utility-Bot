@@ -1,6 +1,9 @@
 ## NightWatch
 A discord bot that allows you to have seamless management for your roleplay server. It has the basic barebones and will have fully-fledged custom integrations. 
 
+<img width="485" height="850" alt="bilde" src="https://github.com/user-attachments/assets/45cc181f-55a3-46ff-80c5-0da49d2d4c05" />
+
+
 ***
 ### Local Installation
 To install the bot and run it locally (to either host it locally or to test it out), follows the steps below.
