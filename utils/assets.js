@@ -6,20 +6,20 @@ const assets = configObj.assets;
 
 module.exports = {
     emojis: {
-        loading: `<:loading:${assets.loading}>`,
-        success: `<:check:${assets.check}>`,
-        error: `<:error:${assets.error}>`,
+        loading: `<:loading:${assets.loading.id}>`,
+        success: `<:check:${assets.check.id}>`,
+        error: `<:error:${assets.error.id}>`,
 
-        refresh: `<:refresh:${assets.refresh}>`,
-        info: `<:info:${assets.info}>`,
-        cog: `<:cog:${assets.cog}>`,
+        refresh: `<:refresh:${assets.refresh.id}>`,
+        info: `<:info:${assets.info.id}>`,
+        cog: `<:cog:${assets.cog.id}>`,
         
-        left: `<:leftchevron:${assets.leftchevron}>`,
-        right: `<:rightchevron:${assets.rightchevron}>`,
+        left: `<:leftchevron:${assets.leftchevron.id}>`,
+        right: `<:rightchevron:${assets.rightchevron.id}>`,
 
-        plus: `<:plus:${assets.plus}>`,
-        edit: `<:edit:${assets.edit}>`,
-        sliders: `<:sliders:${assets.sliders}>`,
-        remove: `<:delete:${assets.delete}>`
+        plus: `<:plus:${assets.plus.id}>`,
+        edit: `<:edit:${assets.edit.id}>`,
+        sliders: `<:sliders:${assets.sliders.id}>`,
+        remove: `<:delete:${assets.delete.id}>`
     }
 }

@@ -108,7 +108,7 @@ const fetchCmd = (location) => {
                     return client.prefixCmds.set(command.name, command);
                 case 'slash':
                     console.log(`${Color.yellow}[Loading]${Color.reset} ${Color.blue}${relative}${Color.reset} as slash command.`);
-                    return client.slashCmds.set(command.name, command);
+                    return client.slashCmds.set(command.data.name, command);
                 case 'sub':
                     console.log(`${Color.yellow}[Loading]${Color.reset} ${Color.blue}${relative}${Color.reset} as subcommand.`);
                     return client.subcommandHandlers.set(dotNotation, command);
@@ -143,31 +143,20 @@ const registerCommands = async () => {
             const command = require(fullPath);
 
             if (!command.type || (!command.name && !command.data) || !command.execute) {
-                console.warn(
-                    `Skipping ${fullPath} as it is missing 'type', 'name' or 'data', or 'execute'.`
-                );
+                console.warn(`Skipping ${fullPath} as it is missing 'type', 'name' or 'data', or 'execute'.`);
                 continue;
             }
 
-            if (command.type === 'prefix') {
-                continue;
-            }
+            if (command.type === 'prefix') continue;
 
             if (command.type === 'slash') {
-                if (!command.data?.name) {
-                    console.warn(`Skipping ${fullPath} as it is missing a valid slash command builder.`);
-                    continue;
-                }
-
+                if (!command.data?.name) continue;
                 slashCommands.push(command.data);
                 continue;
             }
 
             if (command.type === 'sub') {
-                if (!command.data?.name) {
-                    console.warn(`Skipping ${fullPath} as it is missing a valid subcommand builder.`);
-                    continue;
-                }
+                if (!command.data?.name) continue;
 
                 const relative = path.relative(commandsPath, fullPath);
                 const parts = relative.split(path.sep);
@@ -187,16 +176,12 @@ const registerCommands = async () => {
 
                 if (updatedParent !== currentParent) {
                     subcommandParents.set(parentName, updatedParent);
-
                     const parentIndex = slashCommands.indexOf(currentParent);
                     if (parentIndex !== -1) {
                         slashCommands[parentIndex] = updatedParent;
                     }
                 }
-                continue;
             }
-
-            console.warn(`Skipping ${fullPath} as it has an unknown command type.`);
         }
     }
 
@@ -204,21 +189,19 @@ const registerCommands = async () => {
 
     const rest = new REST().setToken(TOKEN);
 
-    (async () => {
-        try {
-            console.log(`Started refreshing ${slashCommands.length} application (/) commands.`);
+    try {
+        console.log(`Started refreshing ${slashCommands.length} application (/) commands.`);
 
-            const data = await rest.put(
-                Routes.applicationCommands(clientId),
-                { body: slashCommands.map(cmd => cmd.toJSON()) }
-            );
+        const data = await rest.put(
+            Routes.applicationCommands(clientId),
+            { body: slashCommands.map(cmd => cmd.toJSON()) }
+        );
 
-            console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-        } catch (error) {
-            console.error(error);
-        }
-    })();
-}
+        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+    } catch (error) {
+        console.error("Error registering slash commands:", error);
+    }
+};
 
 // upload emojis
 async function syncAssets(client) {
@@ -293,13 +276,10 @@ async function syncAssets(client) {
 }
 // command handling
 client.on(Events.InteractionCreate, async interaction => {
-    if (interaction.customId && interaction.customId.startsWith("ignore:")) return;
 
     if (interaction.isChatInputCommand()) {
         const config = getConfig();
-
         const command = client.slashCmds.get(interaction.commandName);
-
         if (command) {
             const agent = interaction.member;
 
@@ -313,7 +293,12 @@ client.on(Events.InteractionCreate, async interaction => {
                 });
             }
 
-            await command.execute();
+            if (!command.noAutoResponse) await interaction.reply({
+                content: `> ${emojiAssets.loading}`,
+                flags: MessageFlags.Ephemeral
+            });
+            console.log("I GOT HERE")
+            await command.execute(interaction, client);
         } else {
             const group = interaction.options.getSubcommandGroup(false);
             const subcommand = interaction.options.getSubcommand(false);
@@ -399,7 +384,11 @@ client.on(Events.MessageCreate, async message => {
 });
 
 
-
+client.on("raw", (packet) => {
+    if (packet.t === "INTERACTION_CREATE") {
+        console.log("Raw interaction payload received from Discord!");
+    }
+});
 
 // on ready
 client.once(Events.ClientReady, async (client) => {
