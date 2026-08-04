@@ -123,7 +123,174 @@ const fetchCmd = (location) => {
 const commandsPath = path.join(__dirname, "commands");
 fetchCmd(commandsPath);
 
+// register slash commands
+const registerCommands = async () => {
+    const commandsPath = path.join(__dirname, 'commands');
+    const slashCommands = [];
+    const subcommandParents = new Map();
 
+    function loadCommands(dir) {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const fullPath = path.join(dir, entry.name);
+
+            if (entry.isDirectory()) {
+                loadCommands(fullPath);
+                continue;
+            }
+
+            if (!entry.name.endsWith('.js')) continue;
+
+            const command = require(fullPath);
+
+            if (!command.type || (!command.name && !command.data) || !command.execute) {
+                console.warn(
+                    `Skipping ${fullPath} as it is missing 'type', 'name' or 'data', or 'execute'.`
+                );
+                continue;
+            }
+
+            if (command.type === 'prefix') {
+                continue;
+            }
+
+            if (command.type === 'slash') {
+                if (!command.data?.name) {
+                    console.warn(`Skipping ${fullPath} as it is missing a valid slash command builder.`);
+                    continue;
+                }
+
+                slashCommands.push(command.data);
+                continue;
+            }
+
+            if (command.type === 'sub') {
+                if (!command.data?.name) {
+                    console.warn(`Skipping ${fullPath} as it is missing a valid subcommand builder.`);
+                    continue;
+                }
+
+                const relative = path.relative(commandsPath, fullPath);
+                const parts = relative.split(path.sep);
+                const parentName = parts[0];
+
+                if (!subcommandParents.has(parentName)) {
+                    const parentCommand = new SlashCommandBuilder()
+                        .setName(parentName)
+                        .setDescription(`Commands for ${parentName}`);
+
+                    subcommandParents.set(parentName, parentCommand);
+                    slashCommands.push(parentCommand);
+                }
+
+                const currentParent = subcommandParents.get(parentName);
+                const updatedParent = currentParent.addSubcommand(command.data);
+
+                if (updatedParent !== currentParent) {
+                    subcommandParents.set(parentName, updatedParent);
+
+                    const parentIndex = slashCommands.indexOf(currentParent);
+                    if (parentIndex !== -1) {
+                        slashCommands[parentIndex] = updatedParent;
+                    }
+                }
+                continue;
+            }
+
+            console.warn(`Skipping ${fullPath} as it has an unknown command type.`);
+        }
+    }
+
+    loadCommands(commandsPath);
+
+    const rest = new REST().setToken(TOKEN);
+
+    (async () => {
+        try {
+            console.log(`Started refreshing ${slashCommands.length} application (/) commands.`);
+
+            const data = await rest.put(
+                Routes.applicationCommands(clientId),
+                { body: slashCommands.map(cmd => cmd.toJSON()) }
+            );
+
+            console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+        } catch (error) {
+            console.error(error);
+        }
+    })();
+}
+
+// upload emojis
+async function syncAssets(client) {
+    const config = path.join(__dirname, "data", "config.json");
+    const assets = path.join(__dirname, "assets");
+
+    const configObj = JSON.parse(fs.readFileSync(config, "utf-8"));
+
+    if (!configObj.assets) {
+        configObj.assets = {};
+    }
+
+    const rest = new REST().setToken(TOKEN);
+
+    console.log(`${Color.yellow}[Assets]${Color.reset} Fetching emojis...`)
+
+    const emojis = await rest.get(
+        Routes.applicationEmojis(client.application.id)
+    );
+
+    const existing = new Map(
+        emojis.items.map((emoji => [emoji.name, emoji]))
+    );
+
+    const files = fs.readdirSync(assets).filter(file => file.endsWith(".png"));
+
+    for (const file of files) {
+        const name = path.parse(file).name;
+
+        if (existing.has(name)) {
+            const emoji = existing.get(name);
+
+            configObj.assets[name] = {
+                id: emoji.id,
+                name: emoji.name
+            };
+
+            console.log(`${Color.yellow}[Asset Loaded]${Color.reset} ${name}`);
+            continue;
+        }
+
+        const image = fs.readFileSync(path.join(assets, file));
+        const uploaded = await rest.post(
+            Routes.applicationEmojis(client.application.id),
+            {
+                body: {
+                    name,
+                    image: `data:image/png;base64,${image.toString("base64")}`
+                }
+            }
+        );
+
+        configObj.assets[name] = {
+            id: uploaded.id,
+            name: uploaded.name
+        };
+
+    }
+
+    for (const emojiName of Object.keys(configObj.assets)) {
+        if (!files.some(file => path.parse(file).name === emojiName)) {
+            delete configObj.assets[emojiName];
+        }
+    }
+
+    fs.writeFileSync(
+        config,
+        JSON.stringify(configObj, null, 2)
+    );
+
+    console.log(`${Color.green}[Assets Synced]${Color.reset}.`)
+}
 // command handling
 client.on(Events.InteractionCreate, async interaction => {
     if (interaction.customId && interaction.customId.startsWith("ignore:")) return;
@@ -141,7 +308,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
             if (!fixedAllowed && !customAllowed) {
                 return await interaction.reply({
-                    content: `${emojis.error} Missing permissions.`,
+                    content: `${emojiAssets.error} Missing permissions.`,
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -169,13 +336,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
                 if (!fixedAllowed && !customAllowed) {
                     return await interaction.reply({
-                        content: `${emojis.error} Missing permissions.`,
+                        content: `${emojiAssets.error} Missing permissions.`,
                         flags: MessageFlags.Ephemeral
                     });
                 }
 
                 const initialResponse = !handler.noAutoResponse ? await interaction.reply({
-                    content: `-# ${emojis.loading}`,
+                    content: `-# ${emojiAssets.loading}`,
                     flags: MessageFlags.Ephemeral
                 }) : null;
 
@@ -195,7 +362,7 @@ client.on(Events.InteractionCreate, async interaction => {
             await handler(interaction, options, client);
         } else {
             return await interaction.reply({
-                content: `${emojis.error} Component handler not found.\n-# Try resending the command.`,
+                content: `${emojiAssets.error} Component handler not found.\n-# Try resending the command.`,
                 flags: MessageFlags.Ephemeral
             });
         }
@@ -220,12 +387,12 @@ client.on(Events.MessageCreate, async message => {
 
         if (!fixedAllowed && !customAllowed) {
             return await message.reply({
-                content: `${emojis.error} Missing permissions.`
+                content: `${emojiAssets.error} Missing permissions.`
             });
         }
 
         const initialResponse = await message.reply({
-            content: `-# ${emojis.loading}`
+            content: `-# ${emojiAssets.loading}`
         });
         await command.execute(client, message, initialResponse, args);
     }
@@ -235,7 +402,13 @@ client.on(Events.MessageCreate, async message => {
 
 
 // on ready
-client.once(Events.ClientReady, (client) => {
+client.once(Events.ClientReady, async (client) => {
+    await registerCommands();
+    await syncAssets(client);
+
+    const { emojis } = require('#utils/assets');
+    emojiAssets = emojis;
+
     client.user.setStatus('dnd');
     client.user.setActivity({ type: 3, name: 'Tactor Development'});
     return console.log(`\n\n${Color.green}[Ready]${Color.reset} Logged in as ${Color.blue}${client.user.tag}${Color.reset}`);

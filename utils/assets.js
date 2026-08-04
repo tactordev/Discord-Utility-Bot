@@ -1,38 +1,25 @@
+const fs = require('fs');
 
-const loading = `<a:tdloading:1372870759101239326>`;
-const success = `<:check:1365656295838978109>`;
-const error = `<:error:1365656796450000937>`;
-
-
-const refresh = `<:refresh:1533502142072230071>`;
-const info = `<:info:1533768559283409057>`;
-const cog = `<:cog:1533768400860479608>`;
-
-
-const left = `<:left:1533502706105450669>`;
-const right = `<:right:1533502668230754326>`;
-
-const plus = `<:plus:1374662179726295140>`;
-const edit = `<:edit:1534126848449970216>`;
-const sliders = `<:sliders:1534129595673088041>`;
-const remove = `<:delete:1534126821027872798>`;
+const config = "./data/config.json";
+const configObj = JSON.parse(fs.readFileSync(config));
+const assets = configObj.assets;
 
 module.exports = {
     emojis: {
-        loading: loading,
-        success: success,
-        error: error,
+        loading: `<:loading:${assets.loading}>`,
+        success: `<:check:${assets.check}>`,
+        error: `<:error:${assets.error}>`,
 
-        refresh: refresh,
-        info: info,
-        cog: cog,
+        refresh: `<:refresh:${assets.refresh}>`,
+        info: `<:info:${assets.info}>`,
+        cog: `<:cog:${assets.cog}>`,
         
-        left: left,
-        right: right,
+        left: `<:leftchevron:${assets.leftchevron}>`,
+        right: `<:rightchevron:${assets.rightchevron}>`,
 
-        plus: plus,
-        edit: edit,
-        sliders: sliders,
-        remove: remove
+        plus: `<:plus:${assets.plus}>`,
+        edit: `<:edit:${assets.edit}>`,
+        sliders: `<:sliders:${assets.sliders}>`,
+        remove: `<:delete:${assets.delete}>`
     }
 }
