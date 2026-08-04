@@ -21,3 +21,17 @@ Follow `Step 1` from the `Local Installation` and then follow instructions provi
 ***
 ### How the codebase works
 The codebase is split into different folders for ease of use. 
+
+- `/assets` is used to store emojis for the bot. Any images with a `.png` file extension will automatically be loaded into the application's emoji store.
+- `/commands` stores all the commands. Each command exports specific data and should be self-explanatory. There are 3 types: slash commands, prefix commands and subcommands. Subcommands are named after the directory they fall under and the name provided in their export.
+- `/data` holds config files for data stored by the bot. Self-explanatory.
+- `/utils` holds utilities such as accessing emojis, using text coloring in the console, saving data, etc.
+
+
+If you wish to add commands in the future, you shouldn't need to touch index.js. Simply follows the format of a command using the same command as yours and fill in the data and async execute with your logic flow.
+
+
+
+***
+Made with love by Tactor.
+❤️
