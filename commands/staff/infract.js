@@ -17,7 +17,7 @@ module.exports = {
             { name: "Termination", value: "termination" }
         ))
         .addStringOption(option => option.setName("reason").setDescription("Reason for the infraction").setRequired(true)),
-    permissions: [discord.PermissionsBitField.Flags.Administrator, discord.PermissionsBitField.Flags.ManageGuild],
+    permissions: [discord.PermissionsBitField.Flags.Administrator, discord.PermissionsBitField.Flags.ManageGuild, discord.PermissionsBitField.Flags.ModerateMembers],
     async execute(interaction) {
         const raw = fs.readFileSync("./data/config.json");
         const data = JSON.parse(raw);
