@@ -828,6 +828,12 @@ module.exports = {
                 .setPlaceholder("Ticket type")
                 .setRequired(true);
 
+            const descriptionInput = new discord.TextInputBuilder()
+                .setCustomId("ignore:tickets:description")
+                .setStyle(discord.TextInputStyle.Paragraph)
+                .setPlaceholder("Ticket Type Description")
+                .setRequired(true);
+
             const categoryInput = new discord.ChannelSelectMenuBuilder()
                 .setChannelTypes(discord.ChannelType.GuildCategory)
                 .setCustomId("ignore:tickets:category")
@@ -843,6 +849,10 @@ module.exports = {
                 .setLabel("Ticket Type Name")
                 .setTextInputComponent(nameInput);
 
+            const descrLabel = new discord.LabelBuilder()
+                .setLabel("Ticket Type Description")
+                .setTextInputComponent(descriptionInput);
+
             const categoryLabel = new discord.LabelBuilder()
                 .setLabel("Ticket Category")
                 .setChannelSelectMenuComponent(categoryInput);
@@ -851,7 +861,7 @@ module.exports = {
                 .setLabel("Support Agent Roles")
                 .setRoleSelectMenuComponent(agentRoleSelect);
 
-            modal.addComponents(nameLabel, categoryLabel, roleLabel);
+            modal.addComponents(nameLabel, descrLabel, categoryLabel, roleLabel);
             return await interaction.showModal(modal);
         },
         "setup:tickets:savenewtype": async (interaction, options, client) => {
@@ -861,11 +871,13 @@ module.exports = {
             });
 
             const type = interaction.fields.getField("ignore:tickets:newtypename");
+            const description = interaction.fields.getField("ignore:tickets:description");
             const category = interaction.fields.getField("ignore:tickets:category");
             const roles = interaction.fields.getField("ignore:tickets:newagentroles");
 
 
             const obj = {
+                description: description.value,
                 category: category.values[0],
                 agents: [...roles.values]
             };
@@ -916,6 +928,13 @@ module.exports = {
                 .setRequired(true)
                 .setStyle(discord.TextInputStyle.Short)
                 .setValue(options[0]);
+
+            const descriptionInput = new discord.TextInputBuilder()
+                .setCustomId("ignore:tickets:description")
+                .setPlaceholder("Ticket Type Description")
+                .setRequired(true)
+                .setStyle(discord.TextInputStyle.Paragraph)
+                .setValue(config.tickets[options[0]].description);
             
             const categorySelect = new discord.ChannelSelectMenuBuilder()
                 .setCustomId("ignore:tickets:category")
@@ -935,6 +954,10 @@ module.exports = {
                 .setLabel("Ticket Type")
                 .setTextInputComponent(typeInput);
             
+            const descrLabel = new discord.LabelBuilder()
+                .setLabel("Ticket Type Description")
+                .setTextInputComponent(descriptionInput);
+
             const catLabel = new discord.LabelBuilder()
                 .setLabel("Ticket Category")
                 .setChannelSelectMenuComponent(categorySelect);
@@ -943,7 +966,7 @@ module.exports = {
                 .setLabel("Support Agent Roles")
                 .setRoleSelectMenuComponent(roleInput);
 
-            modal.addComponents(typeLabel, catLabel, roleLabel);
+            modal.addComponents(typeLabel, descrLabel, catLabel, roleLabel);
 
             return await interaction.showModal(modal);
         },
@@ -954,6 +977,7 @@ module.exports = {
             });
 
             const type = interaction.fields.getField("ignore:tickets:type").value;
+            const description = interaction.fields.getField("ignore:tickets:description").value;
             const cat = interaction.fields.getField("ignore:tickets:category").values[0];
             const roles = interaction.fields.getField("ignore:tickets:agentroles").values;
 
@@ -971,6 +995,7 @@ module.exports = {
 
             delete config.tickets[options[0]]
             config.tickets[type] = {
+                description: description,
                 category: cat,
                 agents: [...roles]
             };
