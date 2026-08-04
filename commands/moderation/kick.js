@@ -19,8 +19,8 @@ module.exports = {
             });
         }
 
-        const member = args[0]
-        const reason = args.length > 1 ? args.slice(1) : "No reason provided."
+        const member = args[0];
+        const reason = args.length > 1 ? args.slice(1).join(" ") : "No reason provided.";
 
         const user = await fetchUser(member, message.guild);
 
@@ -28,7 +28,9 @@ module.exports = {
             content: `${emojis.error} Invalid user provided: **${member}**.\n-# ${format}`
         });
 
-        saveModeration(message.guild.id, user.user.id, "kick", message.author, user.user, Infinity, reason.join(" "));
+        await user.kick(reason);
+
+        saveModeration(message.guild.id, user.user.id, "kick", message.author, user.user, Infinity, reason);
 
         return await initialResponse.edit({
             content: `${emojis.success} Successfully kicked **${user.user.username}** for **${reason}**`

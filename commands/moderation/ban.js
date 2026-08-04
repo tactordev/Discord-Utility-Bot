@@ -10,7 +10,6 @@ module.exports = {
     type: 'prefix',
     permissions: [discord.PermissionsBitField.Flags.BanMembers, discord.PermissionsBitField.Flags.Administrator],
     async execute(client, message, initialResponse, args) {
-        
         await message.delete().catch(() => {});
 
         const format = `ban [user*] [duration ? indefinite] [reason ? No reason provided.]`;
@@ -20,6 +19,7 @@ module.exports = {
                 content: `${emojis.error} Missing required arguments.\n-# ${format}`
             });
         }
+
         const member = args[0];
         const raw = args.slice(1);
 
@@ -40,6 +40,8 @@ module.exports = {
         if (data) {
             ({ rawDuration, duration, reason } = data);
         }
+
+        await user.ban({ reason: reason || "No reason provided." });
 
         saveModeration(message.guild.id, user.user.id, "ban", message.author, user.user, rawDuration, reason);
 

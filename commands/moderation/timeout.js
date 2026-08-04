@@ -24,7 +24,7 @@ module.exports = {
         const user = await fetchUser(member, message.guild);
 
         if (!user) return await initialResponse.edit({
-            content: `${emojis,error} Invalid user provided: **${member}**.\n-# ${format}`
+            content: `${emojis.error} Invalid user provided: **${member}**.\n-# ${format}`
         });
 
         const data = extractTime(raw.join(' '));
@@ -44,6 +44,8 @@ module.exports = {
         if (!rawDuration) return await initialResponse.edit({
             content: `${emojis.error} Invalid duration provided.\n-# ${format}`
         });
+
+        await user.timeout(duration, reason || "No reason provided.");
 
         saveModeration(message.guild.id, user.user.id, "timeout", message.author, user.user, rawDuration, reason);
 
