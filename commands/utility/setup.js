@@ -1,6 +1,12 @@
 const discord = require('discord.js');
 const { emojis } = require('#utils/assets');
 const fs = require('fs');
+const { text } = require('stream/consumers');
+const { sep } = require('path');
+
+const title = (value) => {
+    return `${value[0].toUpperCase()}${value.split("").slice(1).join("")}`
+};
 
 module.exports = {
     type: "sub",
@@ -117,24 +123,18 @@ module.exports = {
 
             // tickets
             .addSeparatorComponents((separator) => separator)
-            .addSectionComponents((section) =>
-                section
-                    .addTextDisplayComponents(
-                        (textDisplay) =>
-                            textDisplay.setContent(
-                                `## [Configuration] Tickets`
-                            )
+            .addTextDisplayComponents(
+                (textDisplay) =>
+                    textDisplay.setContent(
+                        `## [Configuration] Tickets`
                     )
-                    .setButtonAccessory((button) =>
-                        button.setCustomId("setup:tickets:info").setEmoji(infoEmoji).setStyle(discord.ButtonStyle.Secondary)
-                )
             )
             .addSectionComponents((section) =>
                 section
                     .addTextDisplayComponents(
                         (textDisplay) =>
                             textDisplay.setContent(
-                                `> This allows you to add custom ticket types and priorities. This is a 3 step process: add/remove ticket types, set a support agent/management role, choose the hierarchy between types.`
+                                `> This allows you to add custom ticket types and priorities. This allows you to create new ticket types, edit current ones, and remove ticket types.`
                             )
                     )
                     .setButtonAccessory((button) => button.setCustomId("setup:tickets:edit").setEmoji(cogEmoji).setStyle(discord.ButtonStyle.Secondary))
@@ -233,10 +233,6 @@ module.exports = {
             const modal = new discord.ModalBuilder()
                 .setTitle("[Role Permissions] Moderation")
                 .setCustomId("setup:modal:moderationpermissions");
-
-            const title = (value) => {
-                return `${value[0].toUpperCase()}${value.split("").slice(1).join("")}`
-            }
 
             const comps = ["ban", "kick", "timeout", "warn"].map((type) => {
                 const roleSelect = new discord.RoleSelectMenuBuilder()
@@ -698,6 +694,323 @@ module.exports = {
 
             return await interaction.editReply({
                 content: `> ${emojis.success} Successfully updated configuration.`
+            });
+        },
+        "setup:tickets:info": async (interaction, options, client) => {
+            await interaction.reply({
+                content: `> ${emojis.loading}`,
+                flags: discord.MessageFlags.Ephemeral
+            });
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.editReply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`
+                });
+            }
+
+            const config = JSON.parse(raw);
+            const generalTickets = config.rolePermissions?.tickets?.general ?? { respondent: [], management: [] };
+
+            const respondentRoles = generalTickets.respondent?.map((role) => `<@&${role}>`).join(", ") || "None set.";
+            const managementRoles = generalTickets.management?.map((role) => `<@&${role}>`).join(", ") || "None set.";
+            
+
+            const container = new discord.ContainerBuilder()
+                .addTextDisplayComponents((textDisplay) =>
+                    textDisplay.setContent(
+                        `## [Configuration] Tickets\n` +
+                        `> **Support Agent / Respondent Roles:** ${respondentRoles}\n` +
+                        `> **Ticket Management Roles:** ${managementRoles}\n`
+                    )
+                );
+
+            return await interaction.editReply({
+                components: [container],
+                content: null,
+                flags: discord.MessageFlags.IsComponentsV2
+            });
+        },
+        "setup:tickets:edit": async (interaction, options, client) => {
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.reply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`,
+                    flags: discord.MessageFlags.Ephemeral
+                });
+            }
+
+            const config = JSON.parse(raw);
+            
+            const plusEmoji = { id: emojis.plus.split("plus:")[1].split(">")[0], name: "plus" };
+            const deleteEmoji = { id: emojis.remove.split("delete:")[1].split(">")[0], name: "delete" };    
+            const editEmoji = { id: emojis.edit.split("edit:")[1].split(">")[0], name: "edit" };    
+            const slidersEmoji = { id: emojis.sliders.split("sliders:")[1].split(">")[0], name: "sliders" };
+
+
+            const container = new discord.ContainerBuilder()
+                .addSectionComponents((section) =>
+                    section
+                        .addTextDisplayComponents((textDisplay) =>
+                            textDisplay
+                                .setContent("# [Configuration] Tickets\n## Ticket Types")
+                        )
+                        .setButtonAccessory((button) =>
+                            button.setCustomId("setup:tickets:addtype").setStyle(discord.ButtonStyle.Secondary).setEmoji(plusEmoji))
+                );
+            
+            if (Object.entries(config.tickets).length > 1) {
+                for (const entry of Object.entries(config.tickets)) {
+                    const key = entry[0];
+                    const value = entry[1];
+
+
+                    const categoryId = value.category;
+                    const catObj = await interaction.guild.channels.fetch(categoryId);
+                    if (!catObj) { delete config.tickets[key]; continue; }
+                    const cat = catObj.name;
+
+                    const agents = value.agents.map((id) => `<@&${id}>`).join(", ");
+                    
+                    container.addSectionComponents((section) =>
+                        section
+                            .addTextDisplayComponents((textDisplay) =>
+                                textDisplay
+                                    .setContent(
+                                        `**${title(key)}**`
+                                    )
+                            )
+                            .setButtonAccessory((button) => button.setCustomId(`setup:tickets:edittype-${key}`).setStyle(discord.ButtonStyle.Secondary).setEmoji(editEmoji))
+                    );
+                    container.addSectionComponents((section) =>
+                        section
+                            .addTextDisplayComponents((textDisplay) =>
+                                textDisplay
+                                    .setContent(
+                                        `> **Category:** ${cat}` +
+                                        `\n> **Support Agents:** ${agents.length > 0 ? agents : "None set"}.`
+                                    )
+                            )
+                            .setButtonAccessory((button) => button.setCustomId(`setup:tickets:deltype-${key}`).setStyle(discord.ButtonStyle.Secondary).setEmoji(deleteEmoji))
+                    );
+                    container.addSeparatorComponents((separator) => separator);
+                    
+                }
+            } else {
+                container.addTextDisplayComponents((textDisplay) =>
+                    textDisplay
+                        .setContent(
+                            `> No ticket types set.`
+                        )
+                )
+                container.addSeparatorComponents((separator) => separator);
+            };
+
+            
+            return await interaction.reply({
+                content: null,
+                components: [container],
+                flags: discord.MessageFlags.IsComponentsV2 | discord.MessageFlags.Ephemeral
+            });
+        },
+        "setup:tickets:addtype": async (interaction, options, client) => {
+            const modal = new discord.ModalBuilder()
+                .setTitle("[Configuration] Tickets")
+                .setCustomId("setup:tickets:savenewtype");
+
+            const nameInput = new discord.TextInputBuilder()
+                .setCustomId("ignore:tickets:newtypename")
+                .setStyle(discord.TextInputStyle.Short)
+                .setPlaceholder("Ticket type")
+                .setRequired(true);
+
+            const categoryInput = new discord.ChannelSelectMenuBuilder()
+                .setChannelTypes(discord.ChannelType.GuildCategory)
+                .setCustomId("ignore:tickets:category")
+                .setRequired(true)
+                .setMaxValues(1);
+
+            const agentRoleSelect = new discord.RoleSelectMenuBuilder()
+                .setCustomId("ignore:tickets:newagentroles")
+                .setRequired(true)
+                .setMaxValues(4);
+
+            const nameLabel = new discord.LabelBuilder()
+                .setLabel("Ticket Type Name")
+                .setTextInputComponent(nameInput);
+
+            const categoryLabel = new discord.LabelBuilder()
+                .setLabel("Ticket Category")
+                .setChannelSelectMenuComponent(categoryInput);
+
+            const roleLabel = new discord.LabelBuilder()
+                .setLabel("Support Agent Roles")
+                .setRoleSelectMenuComponent(agentRoleSelect);
+
+            modal.addComponents(nameLabel, categoryLabel, roleLabel);
+            return await interaction.showModal(modal);
+        },
+        "setup:tickets:savenewtype": async (interaction, options, client) => {
+            await interaction.reply({
+                content: `> ${emojis.loading} Saving new ticket configuration...`,
+                flags: discord.MessageFlags.Ephemeral
+            });
+
+            const type = interaction.fields.getField("ignore:tickets:newtypename");
+            const category = interaction.fields.getField("ignore:tickets:category");
+            const roles = interaction.fields.getField("ignore:tickets:newagentroles");
+
+
+            const obj = {
+                category: category.values[0],
+                agents: [roles.values]
+            };
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.editReply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`,
+                    flags: discord.MessageFlags.Ephemeral
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            config.tickets[type.value] = obj;
+
+            await fs.promises.writeFile("./data/config.json.tmp", JSON.stringify(config, null, 2));
+            await fs.promises.rename("./data/config.json.tmp", "./data/config.json");
+
+            return await interaction.editReply({
+                content: `> ${emojis.success} Updated ticket config successfully.`
+            });
+        },
+        "setup:tickets:edittype": async (interaction, options, client) => {
+            if (!options.length > 0) return;
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.reply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`,
+                    flags: discord.MessageFlags.Ephemeral
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            const modal = new discord.ModalBuilder()
+                .setCustomId(`setup:tickets:saveedit-${options[0]}`)
+                .setTitle("[Configuration] Tickets");
+
+            const typeInput = new discord.TextInputBuilder()
+                .setCustomId("ignore:tickets:type")
+                .setPlaceholder("Ticket type")
+                .setRequired(true)
+                .setStyle(discord.TextInputStyle.Short)
+                .setValue(options[0]);
+            
+            const categorySelect = new discord.ChannelSelectMenuBuilder()
+                .setCustomId("ignore:tickets:category")
+                .setChannelTypes(discord.ChannelType.GuildCategory)
+                .setMaxValues(1)
+                .setRequired(true)
+                .setDefaultChannels(config.tickets[options[0]].category);
+
+
+            const roleInput = new discord.RoleSelectMenuBuilder()
+                .setCustomId("ignore:tickets:agentroles")
+                .setMaxValues(4)
+                .setRequired(true)
+                .setDefaultRoles(...config.tickets[options[0]].agents);
+
+            const typeLabel = new discord.LabelBuilder()
+                .setLabel("Ticket Type")
+                .setTextInputComponent(typeInput);
+            
+            const catLabel = new discord.LabelBuilder()
+                .setLabel("Ticket Category")
+                .setChannelSelectMenuComponent(categorySelect);
+
+            const roleLabel = new discord.LabelBuilder()
+                .setLabel("Support Agent Roles")
+                .setRoleSelectMenuComponent(roleInput);
+
+            modal.addComponents(typeLabel, catLabel, roleLabel);
+
+            return await interaction.showModal(modal);
+        },
+        "setup:tickets:saveedit": async (interaction, options, client) => {
+            await interaction.reply({
+                content: `> ${emojis.loading} Updating configuration...`,
+                flags: discord.MessageFlags.Ephemeral
+            });
+
+            const type = interaction.fields.getField("ignore:tickets:type").value;
+            const cat = interaction.fields.getField("ignore:tickets:category").values[0];
+            const roles = interaction.fields.getField("ignore:tickets:agentroles").values;
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.reply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`,
+                    flags: discord.MessageFlags.Ephemeral
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            delete config.tickets[options[0]]
+            config.tickets[type] = {
+                category: cat,
+                agents: [...roles]
+            };
+
+            await fs.promises.writeFile("./data/config.json.tmp", JSON.stringify(config, null, 2));
+            await fs.promises.rename("./data/config.json.tmp", "./data/config.json");
+
+            return await interaction.editReply({
+                content: `> ${emojis.success} Updated ticket configuration successfully.`
+            });
+        },
+        "setup:tickets:deltype": async (interaction, options, client) => {
+            await interaction.reply({
+                content: `> ${emojis.loading} Deleting ticket configuration...`,
+                flags: discord.MessageFlags.Ephemeral
+            });
+
+            if (!options[0]) return await interaction.editReply({
+                content: `> ${emojis.error} Unknown ticket type.\n-# Resend the initial command to receive the most up-to-date information.`,
+            });
+
+            const raw = fs.readFileSync("./data/config.json");
+            try {
+                JSON.parse(raw);
+            } catch (err) {
+                return await interaction.reply({
+                    content: `> ${emojis.error} There was an error fetching the config file. Please revert it to the default config.`,
+                    flags: discord.MessageFlags.Ephemeral
+                });
+            }
+
+            const config = JSON.parse(raw);
+
+            delete config.tickets[options[0]];
+
+            await fs.promises.writeFile("./data/config.json.tmp", JSON.stringify(config, null, 2));
+            await fs.promises.rename("./data/config.json.tmp", "./data/config.json");
+
+            return await interaction.editReply({
+                content: `> ${emojis.success} Delete the ticket configuration successfully.`,
             });
         }
     }
