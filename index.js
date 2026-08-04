@@ -30,7 +30,46 @@ client.slashCmds = new Collection();
 client.subcommandHandlers = new Collection();
 client.componentHandlers = new Collection();
 
+const CUSTOM_ROLE_PERMISSION_KEYS = {
+    ban: "ban",
+    kick: "kick",
+    timeout: "timeout",
+    warn: "warn",
+    "sessions.start": "sessionManagement",
+    "sessions.vote": "sessionManagement",
+    "sessions.boost": "sessionManagement",
+    "sessions.assistance": "sessionManagement",
+    "utility.setup": "botManagement"
+};
 
+const getConfig = () => {
+    try {
+        return JSON.parse(fs.readFileSync(path.join(__dirname, "data", "config.json"), "utf8"));
+    } catch {
+        return null;
+    }
+};
+
+const getCustomRolePermissionKeys = (commandName, dotNotation) => {
+    const keys = new Set();
+
+    if (CUSTOM_ROLE_PERMISSION_KEYS[commandName]) keys.add(CUSTOM_ROLE_PERMISSION_KEYS[commandName]);
+    if (CUSTOM_ROLE_PERMISSION_KEYS[dotNotation]) keys.add(CUSTOM_ROLE_PERMISSION_KEYS[dotNotation]);
+
+    return [...keys];
+};
+
+const hasAllowedRoles = (member, config, permissionKeys) => {
+    if (!permissionKeys.length) return true;
+    if (member.permissions?.has(PermissionsBitField.Flags.Administrator)) return true;
+
+    return permissionKeys.every((key) => {
+        const roleIds = config?.rolePermissions?.[key] ?? [];
+        if (!roleIds.length) return true;
+
+        return roleIds.some((roleId) => member.roles?.cache?.has(roleId));
+    });
+};
 
 // fetching cmds
 const fetchCmd = (location) => {
@@ -47,17 +86,18 @@ const fetchCmd = (location) => {
             const relative = path.relative(commandsDir, full);
             const withoutExtension = relative.slice(0, -path.extname(relative).length);
             const dotNotation = withoutExtension.split(path.sep).join('.');
-            
+
+            command.customRolePermissionKeys = getCustomRolePermissionKeys(command.name, dotNotation);
+
             if (!command.type || (!(command.name) && !(command.data)) || !command.execute) {
-                return console.warn(`${Color.orange}[Skipping]${Color.reset} ${Color.blue}${relative}${Color.reset} as it is missing an attribute of 'type', 'name' or 'data', 'execute'`);   
+                return console.warn(`${Color.orange}[Skipping]${Color.reset} ${Color.blue}${relative}${Color.reset} as it is missing an attribute of 'type', 'name' or 'data', 'execute'`);
             }
-            
+
             // register component handlers
             if (command.interactions) {
                 for (const [id, callback] of Object.entries(command.interactions)) {
-                    console.log(id);
                     if (id.startsWith("ignore:")) continue;
-                    
+
                     client.componentHandlers.set(id, callback);
                 }
             }
@@ -86,31 +126,23 @@ fetchCmd(commandsPath);
 
 
 // command handling
-
 client.on(Events.InteractionCreate, async interaction => {
     if (interaction.customId && interaction.customId.startsWith("ignore:")) return;
 
     if (interaction.isChatInputCommand()) {
+        const config = getConfig();
 
         const command = client.slashCmds.get(interaction.commandName);
 
-        
-
         if (command) {
-            
-            if (command.permissions) {
-                const agent = interaction.member;
+            const agent = interaction.member;
 
-                let allowed = false;
-                let required = ``;
-                command.permissions.map((permission, index) => {
-                    if (agent.permissions.has(permission)) allowed = true;
-                    required += `\`${new PermissionsBitField(permission)}\`${index === command.permissions.length - 1 ? "" : ", "}`;
-                    
-                });
-                
-                if (!allowed) return await interaction.reply({
-                    content: `${emojis.error} Missing permissions.\n-# ${required}`,
+            const fixedAllowed = !command.permissions?.length || command.permissions.some((permission) => agent.permissions.has(permission));
+            const customAllowed = hasAllowedRoles(agent, config, command.customRolePermissionKeys ?? []);
+
+            if (!fixedAllowed && !customAllowed) {
+                return await interaction.reply({
+                    content: `${emojis.error} Missing permissions.`,
                     flags: MessageFlags.Ephemeral
                 });
             }
@@ -131,26 +163,23 @@ client.on(Events.InteractionCreate, async interaction => {
 
             const handler = client.subcommandHandlers.get(key);
             if (handler) {
-                if (handler.permissions) {
-                    const agent = interaction.member;
+                const agent = interaction.member;
 
-                    let allowed = false;
-                    let required = ``;
-                    handler.permissions.map((permission, index) => {
-                        if (agent.permissions.has(permission)) allowed = true;
-                        required += `\`${new PermissionsBitField(permission)}\`${index === handler.permissions.length - 1 ? "" : ", "}`;
-                        
-                    });
-                    
-                    if (!allowed) return await interaction.reply({
-                        content: `${emojis.error} Missing permissions.\n-# ${required}`,
+                const fixedAllowed = !handler.permissions?.length || handler.permissions.some((permission) => agent.permissions.has(permission));
+                const customAllowed = hasAllowedRoles(agent, config, handler.customRolePermissionKeys ?? []);
+
+                if (!fixedAllowed && !customAllowed) {
+                    return await interaction.reply({
+                        content: `${emojis.error} Missing permissions.`,
                         flags: MessageFlags.Ephemeral
                     });
                 }
+
                 const initialResponse = !handler.noAutoResponse ? await interaction.reply({
                     content: `-# ${emojis.loading}`,
                     flags: MessageFlags.Ephemeral
                 }) : null;
+
                 await handler.execute(interaction, initialResponse);
             } else {
                 return await interaction.reply({ content: `Command handler not found.`, flags: MessageFlags.Ephemeral });
@@ -184,18 +213,15 @@ client.on(Events.MessageCreate, async message => {
 
         if (!command) return;
 
-        if (command.permissions) {
-            const agent = message.member;
-            let allowed = false;
-            let required = ``;
-            command.permissions.map((permission, index) => {
-                if (agent.permissions.has(permission)) allowed = true;
-                required += `\`${new PermissionsBitField(permission)}\`${index === command.permissions.length - 1 ? "" : ", "}`;
-                
-            });
-            
-            if (!allowed) return await message.reply({
-                content: `${emojis.error} Missing permissions.\n-# ${required}`
+        const config = getConfig();
+        const agent = message.member;
+
+        const fixedAllowed = !command.permissions?.length || command.permissions.some((permission) => agent.permissions.has(permission));
+        const customAllowed = hasAllowedRoles(agent, config, command.customRolePermissionKeys ?? []);
+
+        if (!fixedAllowed && !customAllowed) {
+            return await message.reply({
+                content: `${emojis.error} Missing permissions.`
             });
         }
 
