@@ -3,9 +3,6 @@
     "logs": null,
     "transcripts": null
   },
-  "categories": {
-    "general": null
-  },
   "rolePermissions": {
     "ban": [],
     "kick": [],
@@ -13,12 +10,6 @@
     "warn": [],
     "sessionManagement": [],
     "staffManagement": [],
-    "tickets": {
-      "general": {
-        "respondent": [],
-        "management": []
-      }
-    },
     "botManagement": []
   },
   "sessionEmbeds": {
@@ -28,5 +19,5 @@
     "boost": null,
     "assistance": null
   },
-  "ticketHierarchy": []
+  "tickets": {}
 }
