@@ -12,6 +12,11 @@ const cog = `<:cog:1533768400860479608>`;
 const left = `<:left:1533502706105450669>`;
 const right = `<:right:1533502668230754326>`;
 
+const plus = `<:plus:1374662179726295140>`;
+const edit = `<:edit:1534126848449970216>`;
+const sliders = `<:sliders:1534129595673088041>`;
+const remove = `<:delete:1534126821027872798>`;
+
 module.exports = {
     emojis: {
         loading: loading,
@@ -23,6 +28,11 @@ module.exports = {
         cog: cog,
         
         left: left,
-        right: right
+        right: right,
+
+        plus: plus,
+        edit: edit,
+        sliders: sliders,
+        remove: remove
     }
 }
