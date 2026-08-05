@@ -1,25 +1,28 @@
 const fs = require('fs');
+const path = require('path');
 
-const config = "./data/config.json";
-const configObj = JSON.parse(fs.readFileSync(config));
-const assets = configObj.assets;
+const configPath = path.join(__dirname, '..', 'data', 'config.json');
 
-module.exports = {
-    emojis: {
-        loading: `<:loading:${assets.loading.id}>`,
-        success: `<:check:${assets.check.id}>`,
-        error: `<:error:${assets.error.id}>`,
-
-        refresh: `<:refresh:${assets.refresh.id}>`,
-        info: `<:info:${assets.info.id}>`,
-        cog: `<:cog:${assets.cog.id}>`,
-        
-        left: `<:leftchevron:${assets.leftchevron.id}>`,
-        right: `<:rightchevron:${assets.rightchevron.id}>`,
-
-        plus: `<:plus:${assets.plus.id}>`,
-        edit: `<:edit:${assets.edit.id}>`,
-        sliders: `<:sliders:${assets.sliders.id}>`,
-        remove: `<:delete:${assets.delete.id}>`
+function getAssetsConfig() {
+    try {
+        const configObj = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        return configObj.assets || {};
+    } catch {
+        return {};
     }
 }
+
+const emojis = new Proxy({}, {
+    get(target, prop) {
+        const assets = getAssetsConfig();
+        const asset = assets[prop];
+
+        if (!asset?.id) {
+            return `:${prop}:`; 
+        }
+
+        return `<:${asset.name}:${asset.id}>`;
+    }
+});
+
+module.exports = { emojis };
