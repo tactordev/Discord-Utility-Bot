@@ -747,7 +747,7 @@ module.exports = {
             const config = JSON.parse(raw);
             
             const plusEmoji = { id: emojis.plus.split("plus:")[1].split(">")[0], name: "plus" };
-            const deleteEmoji = { id: emojis.remove.split("delete:")[1].split(">")[0], name: "delete" };    
+            const deleteEmoji = { id: emojis.delete.split("delete:")[1].split(">")[0], name: "delete" };    
             const editEmoji = { id: emojis.edit.split("edit:")[1].split(">")[0], name: "edit" };    
             const slidersEmoji = { id: emojis.sliders.split("sliders:")[1].split(">")[0], name: "sliders" };
 

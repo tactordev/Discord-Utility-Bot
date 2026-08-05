@@ -214,7 +214,7 @@ module.exports = {
             writeStream.write("\n");
             writeStream.end();
 
-            const removeEmoji = { id: emojis.remove.split("delete:")[1].split(">")[0], name: "delete" };  
+            const removeEmoji = { id: emojis.delete.split("delete:")[1].split(">")[0], name: "delete" };  
 
             const container = new discord.ContainerBuilder()
                 .addTextDisplayComponents((textDisplay) => 
