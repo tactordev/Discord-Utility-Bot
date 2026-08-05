@@ -297,7 +297,6 @@ client.on(Events.InteractionCreate, async interaction => {
                 content: `> ${emojiAssets.loading}`,
                 flags: MessageFlags.Ephemeral
             });
-            console.log("I GOT HERE")
             await command.execute(interaction, client);
         } else {
             const group = interaction.options.getSubcommandGroup(false);
@@ -380,13 +379,6 @@ client.on(Events.MessageCreate, async message => {
             content: `-# ${emojiAssets.loading}`
         });
         await command.execute(client, message, initialResponse, args);
-    }
-});
-
-
-client.on("raw", (packet) => {
-    if (packet.t === "INTERACTION_CREATE") {
-        console.log("Raw interaction payload received from Discord!");
     }
 });
 
